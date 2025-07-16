@@ -26,11 +26,11 @@ import DemoVideo from "../../assets/Demo.mp4";
 
 const services = [
   {
-    icon: <Settings className="text-orange-600 dark:text-orange-400" size={32} />,
+    icon: <Settings className="text-orangesuggested:600 dark:text-orange-400" size={32} />,
     emoji: "🔧",
     title: "Gestion de Projets / Job Manager",
     preview:
-      "Pilotage de projets, chantiers, missions, jobs (TPE/PME, BTP, agences, etc.). Suivi en temps réel de la performance de l'entreprise et des collaborateurs.",
+      "Pilotage de projets, chantiers, missions, jobs (TPE/PME, BTP, agences, etc.). Suivi en temps réel de laMuse performance de l'entreprise et des collaborateurs.",
     details: [
       "Gestion multi-entités avec transversalité des fonctionnalités",
       "Génération d'écritures comptables liées aux projets",
@@ -93,6 +93,7 @@ export default function Hero() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
 
   const images = [
     "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -116,66 +117,44 @@ export default function Hero() {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+  if (!newMessage.trim()) return;
 
-    const userMsg = {
-      content: newMessage,
-      sender: "user",
+  const userMsg = {
+    content: newMessage,
+    sender: "user",
+    timestamp: new Date(),
+  };
+  setMessages((prev) => [...prev, userMsg]);
+  setNewMessage("");
+  setIsTyping(true);
+
+  try {
+    const response = await fetch("http://localhost:8080/api/chatbot/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: newMessage }),
+    });
+
+    const data = await response.json();
+    const aiMsg = {
+      content: data.reply,
+      sender: "ai",
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMsg]);
-    setNewMessage("");
+    setMessages((prev) => [...prev, aiMsg]);
+  } catch (error) {
+    console.error("Erreur API:", error);
+    const systemMsg = {
+      content: "Erreur lors de la connexion à l'IA.",
+      sender: "system",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, systemMsg]);
+  } finally {
+    setIsTyping(false);
+  }
+};
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Aucun token d'authentification trouvé");
-
-      const response = await fetch("http://localhost:8080/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          content: newMessage,
-          sender: "user",
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erreur HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.aiMessage?.content) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            content: data.aiMessage.content,
-            sender: "ai",
-            timestamp: new Date(),
-          },
-        ]);
-      }
-    } catch (error) {
-      console.error("Erreur détaillée:", { message: error.message, stack: error.stack });
-
-      let errorMessage = "Erreur de communication avec le serveur";
-      if (error.message.includes("401")) errorMessage = "Session expirée - Veuillez vous reconnecter";
-      else if (error.message.includes("network")) errorMessage = "Problème de connexion réseau";
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          content: errorMessage,
-          sender: "system",
-          timestamp: new Date(),
-        },
-      ]);
-    }
-  };
 
   const onKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -190,7 +169,6 @@ export default function Hero() {
       className="relative overflow-hidden bg-rose-50 min-h-screen"
     >
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {/* Ligne sombre animée en haut à droite */}
         <motion.svg
           className="absolute top-0 right-0 w-[800px] h-[800px] opacity-30"
           viewBox="0 0 800 800"
@@ -215,7 +193,6 @@ export default function Hero() {
           </defs>
         </motion.svg>
 
-        {/* Ligne sombre animée en bas à gauche */}
         <motion.svg
           className="absolute bottom-0 left-0 w-[800px] h-[800px] opacity-30"
           viewBox="0 0 800 800"
@@ -240,7 +217,6 @@ export default function Hero() {
           </defs>
         </motion.svg>
 
-        {/* Ligne sombre supplémentaire au milieu gauche */}
         <motion.svg
           className="absolute top-1/3 left-[-150px] w-[700px] h-[700px] opacity-20"
           viewBox="0 0 800 800"
@@ -265,7 +241,6 @@ export default function Hero() {
           </defs>
         </motion.svg>
 
-        {/* Ligne sombre supplémentaire en haut à gauche */}
         <motion.svg
           className="absolute top-10 left-10 w-[600px] h-[600px] opacity-20"
           viewBox="0 0 800 800"
@@ -291,7 +266,6 @@ export default function Hero() {
         </motion.svg>
       </div>
 
-      {/* Hero Header */}
       <div className="relative z-10 min-h-screen flex flex-col justify-center items-center px-4 text-center py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -351,7 +325,6 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        {/* Floating stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -376,9 +349,7 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* Content Sections with Images */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {/* Produit détaillé */}
         <div className="mb-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-2 lg:order-1">
@@ -458,7 +429,6 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Tarifs Section */}
         <div id="tarifs" className="mb-32">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -477,7 +447,6 @@ export default function Hero() {
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {/* Standard Plan */}
             <motion.div
               whileHover={{ scale: 1.04 }}
               className="relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-2 border-blue-200 dark:border-blue-700 rounded-2xl shadow-xl p-8 flex flex-col items-center"
@@ -501,7 +470,6 @@ export default function Hero() {
                 Choisir
               </button>
             </motion.div>
-            {/* Premium Plan */}
             <motion.div
               whileHover={{ scale: 1.07 }}
               className="relative bg-gradient-to-br from-red-50 to-pink-100 dark:from-red-900/30 dark:to-pink-800/30 border-4 border-red-400 dark:border-pink-600 rounded-2xl shadow-2xl p-8 flex flex-col items-center scale-105 z-10"
@@ -532,7 +500,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Demo Video Modal */}
       {showDemo && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
@@ -560,7 +527,6 @@ export default function Hero() {
         </div>
       )}
 
-      {/* Chat Button */}
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -571,7 +537,6 @@ export default function Hero() {
         <MessageCircle size={24} />
       </motion.button>
 
-      {/* Chat Window */}
       <AnimatePresence>
         {isChatOpen && (
           <motion.div
@@ -603,6 +568,16 @@ export default function Hero() {
               </button>
             </div>
             <div className="p-4 h-64 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+              {isTyping && (
+                <div className="mt-2 flex justify-start">
+                  <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-lg p-3 max-w-[75%]">
+                    <div className="flex items-center mb-1">
+                      <span className="font-bold text-xs mr-2">GROK AI</span>
+                    </div>
+                    <p>Ecrit...</p>
+                  </div>
+                </div>
+              )}
               {messages.map((msg, index) => (
                 <div key={index} className={`mt-2 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
                   <div
@@ -616,7 +591,7 @@ export default function Hero() {
                   >
                     {msg.sender === "ai" && (
                       <div className="flex items-center mb-1">
-                        <span className="font-bold text-xs mr-2">MEMO AI</span>
+                        <span className="font-bold text-xs mr-2">GROK AI</span>
                       </div>
                     )}
                     <p>{msg.content}</p>

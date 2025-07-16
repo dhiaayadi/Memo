@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Lottie from "lottie-react";
 import userIconAnimation from "../assets/userIcon.json";
-import SuccessAnimation from "./SuccessAnimation";
 import cartAnimation from "../assets/Animation_Cart_Cleaned.json";
 import image from "../assets/logo.png";
 import {
@@ -53,8 +52,6 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const lottieCartRef = useRef();
   const navRef = useRef(null);
-  const [showAddAnimation, setShowAddAnimation] = useState(false);
-  const [animationStep, setAnimationStep] = useState("idle");
   const [showLottie, setShowLottie] = useState(true);
 
   useEffect(() => {
@@ -66,16 +63,12 @@ export default function Navbar() {
       }, 1800);
     }
   }, [isAdding]);
+  
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 100) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 100);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -94,7 +87,6 @@ export default function Navbar() {
       }
       setActive(current);
     };
-
     window.addEventListener("scroll", handleScroll);
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
@@ -113,6 +105,13 @@ export default function Navbar() {
   };
 
   const handleItemClick = (item) => {
+    if (item.id === "accueil") {
+      navigate("/");
+      setActive(item.id);
+      setMenuOpen(false);
+      setDropdownOpen(null);
+      return;
+    }
     if (item.submenu) {
       setDropdownOpen(dropdownOpen === item.id ? null : item.id);
     } else {
@@ -152,112 +151,8 @@ export default function Navbar() {
     }, 700);
   };
 
-  const updateQuantity = (productId, newQuantity) => {
-    if (newQuantity < 1) return;
-    setIsAnimating(true);
-    const timer = setTimeout(() => setIsAnimating(false), 600);
-    if (typeof updateCartQuantity === "function") {
-      updateCartQuantity(productId, newQuantity);
-    }
-    return () => clearTimeout(timer);
-  };
-
   return (
     <>
-      <style>
-        {`
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
-          }
-          @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.6); box-shadow: 0 0 8px rgba(255,0,0,0.6); }
-            100% { transform: scale(1); box-shadow: none; }
-          }
-          @keyframes fadeSlideIn {
-            0% { opacity: 0; transform: translateX(30px) scale(0.9); }
-            100% { opacity: 1; transform: translateX(0) scale(1); }
-          }
-          @keyframes fadeSlideOutRotate {
-            0% { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
-            100% { opacity: 0; transform: translateX(-40px) rotate(-15deg) scale(0.8); }
-          }
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); box-shadow: none; }
-            50% { transform: scale(1.1); box-shadow: 0 0 12px rgba(220,20,60,0.8); }
-          }
-          @keyframes fadeZoomIn {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
-          }
-          @keyframes fadeZoomOut {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(0.9); }
-          }
-          @keyframes underline {
-            from { width: 0; }
-            to { width: 100%; }
-          }
-          .animate-shake {
-            animation: shake 0.5s ease;
-          }
-          .animate-pop {
-            animation: pop 0.7s ease;
-          }
-          .fade-slide-in {
-            animation: fadeSlideIn 0.5s ease forwards;
-          }
-          .fade-slide-out-rotate {
-            animation: fadeSlideOutRotate 0.6s ease forwards;
-          }
-          .pulse {
-            animation: pulse 1.2s ease infinite;
-          }
-          .fade-zoom-in {
-            animation: fadeZoomIn 0.4s ease forwards;
-          }
-          .fade-zoom-out {
-            animation: fadeZoomOut 0.4s ease forwards;
-          }
-          .shake {
-            animation: shake 0.4s ease;
-          }
-          .disabled {
-            pointer-events: none;
-            opacity: 0.6;
-          }
-          .group:hover .group-hover\:opacity-100 {
-            opacity: 1 !important;
-          }
-          .group:hover .group-hover\:pointer-events-auto {
-            pointer-events: auto !important;
-          }
-          @keyframes fadeSlideUp {
-            from {
-              opacity: 0;
-              transform: translateY(8px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-fade-slide-up {
-            animation: fadeSlideUp 0.3s ease-out forwards;
-          }
-          .hover-glow:hover {
-            box-shadow: 0 0 12px rgba(255, 0, 102, 0.4);
-            transform: scale(1.02);
-          }
-          .hover-glow-red:hover {
-            box-shadow: 0 0 10px rgba(249, 168, 212, 0.4);
-            transform: scale(1.03);
-          }
-        `}
-      </style>
-
       <nav
         className={`fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-2 flex items-center justify-between transition-colors duration-300 ${
           isScrolled
@@ -274,16 +169,13 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:block relative">
-          <ul 
-            ref={navRef}
-            className="flex gap-8 items-center px-2 py-2 relative"
-          >
+          <ul ref={navRef} className="flex gap-8 items-center px-2 py-2 relative">
             {navItems.map((item) => (
               <li key={item.id} className="relative" data-id={item.id}>
                 <div
                   className={`cursor-pointer text-sm md:text-base transition-all duration-300 flex items-center gap-1 py-2 px-1 relative ${
                     active === item.id
-                      ? "text-white font-semibold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-white after:w-full"
+                      ? "text-red-600 font-semibold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-red-600 after:w-full"
                       : "text-gray-900 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-gray-900 dark:after:bg-gray-200 after:w-0 hover:after:w-full after:transition-all after:duration-300"
                   }`}
                   onClick={() => handleItemClick(item)}
@@ -311,6 +203,7 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
+          {/* Bouton panier */}
           <button
             onClick={() => setShowCart(!showCart)}
             className="relative flex items-center justify-center w-11 h-11 rounded-full bg-gray-900 dark:bg-gray-800 border border-gray-700 shadow-inner transition p-0"
