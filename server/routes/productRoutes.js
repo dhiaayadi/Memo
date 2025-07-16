@@ -10,18 +10,17 @@ import {
   updateProduct,
   deleteProduct
 } from '../controllers/productController.js';
-const productRoute = express.Router();
-
-productRoute.post('/create-product', userAuth, requireAdmin, createProduct);
-productRoute.get('/get-all-products', userAuth, requireAdmin, getAllProducts);
-productRoute.get('/get-product/:id', userAuth, requireAdmin, getProductById);
-productRoute.put('/update-product/:id', userAuth, requireAdmin, updateProduct);
-productRoute.delete('/delete-product/:id', userAuth, requireAdmin, deleteProduct);  
-
-
 
 const router = express.Router();
 
+// Routes Admin protégées
+router.post('/create-product', userAuth, requireAdmin, createProduct);
+router.get('/get-all-products', userAuth, requireAdmin, getAllProducts);
+router.get('/get-product/:id', userAuth, requireAdmin, getProductById);
+router.put('/update-product/:id', userAuth, requireAdmin, updateProduct);
+router.delete('/delete-product/:id', userAuth, requireAdmin, deleteProduct);
+
+// ➕ route publique : voir tous les produits
 router.get("/", async (req, res) => {
   try {
     const products = await Product.find({});
