@@ -10,7 +10,7 @@ dotenv.config();
 // 🔹 Import des routes
 import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js'; 
-import productRoutes from './routes/ProductRoutes.js';
+import productRoutes from './routes/productRoutes.js';
 import statistiquesRouter from './routes/AdminRouter.js';
 import reviewRouter from './routes/reviewRoutes.js';
 import panierRoutes from './routes/panierRoutes.js';
